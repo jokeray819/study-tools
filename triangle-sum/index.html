@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三角形内角和 · 数学学习工具</title>
+  <style>
+    :root {
+      --bg: #fef9ef;
+      --card: #ffffff;
+      --text: #2d3436;
+      --muted: #636e72;
+      --soft: #b2bec3;
+      --border: #f0e6d6;
+      --coral: #ff6b6b;
+      --mint: #2ec4b6;
+      --orange: #ff9f1c;
+      --purple: #a855f7;
+      --blue: #3b82f6;
+      --canvas: #f7fbff;
+      --shadow: 0 4px 20px rgba(0, 0, 0, .08);
+      --small-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at -20px -40px, rgba(255, 107, 107, .12), transparent 330px),
+        radial-gradient(circle at calc(100% + 60px) calc(100% + 70px), rgba(46, 196, 182, .12), transparent 390px),
+        var(--bg);
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    header {
+      position: relative;
+      z-index: 1;
+      padding: 16px 24px 8px;
+      text-align: center;
+    }
+
+    .back-link {
+      position: absolute;
+      top: 19px;
+      left: 24px;
+      color: var(--muted);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .back-link:hover { color: var(--coral); }
+    .back-link:focus-visible { outline: 2px solid var(--coral); outline-offset: 4px; }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 30px);
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--coral), var(--orange));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    header p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+
+    main {
+      display: flex;
+      gap: 16px;
+      width: min(1120px, 100%);
+      min-height: calc(100vh - 76px);
+      margin: 0 auto;
+      padding: 8px 20px 16px;
+    }
+
+    .canvas-section { display: flex; flex: 1; min-width: 0; flex-direction: column; }
+
+    .canvas-wrapper {
+      display: flex;
+      flex: 1;
+      min-height: 500px;
+      padding: 10px;
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border-radius: 10px;
+      background: var(--canvas);
+      cursor: default;
+      touch-action: none;
+    }
+
+    .canvas-hint {
+      flex-shrink: 0;
+      margin-top: 6px;
+      color: var(--soft);
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .panel {
+      display: flex;
+      width: 290px;
+      flex-shrink: 0;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .card {
+      flex-shrink: 0;
+      padding: 14px 16px;
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: var(--small-shadow);
+      transition: box-shadow .2s;
+    }
+
+    .card:hover { box-shadow: var(--shadow); }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .card-title .icon {
+      display: inline-flex;
+      width: 20px;
+      height: 20px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .data-row, .sum-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+
+    .data-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .data-dot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; }
+    .data-value { font-size: 14px; font-variant-numeric: tabular-nums; font-weight: 700; }
+
+    .sum-row {
+      margin-top: 4px;
+      padding-top: 7px;
+      border-top: 2px dashed var(--border);
+    }
+
+    .sum-label { font-size: 12px; font-weight: 600; }
+    .sum-value { color: var(--coral); font-size: 18px; font-weight: 800; }
+    .divider { height: 1px; margin: 6px 0; background: var(--border); }
+
+    .type-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+    .type-badge { padding: 4px 10px; border: 1.5px solid; border-radius: 14px; font-size: 11px; font-weight: 600; }
+
+    .preset-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+
+    .btn {
+      padding: 8px 4px;
+      border: 1.5px solid;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .btn:hover { transform: translateY(-2px); box-shadow: var(--small-shadow); }
+    .btn:active { transform: translateY(0); }
+    .btn:focus-visible, .custom-cb:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+    .btn-equilateral { color: var(--coral); background: #ff6b6b18; border-color: #ff6b6b40; }
+    .btn-isosceles { color: var(--mint); background: #2ec4b618; border-color: #2ec4b640; }
+    .btn-right { color: var(--orange); background: #ff9f1c18; border-color: #ff9f1c40; }
+    .btn-obtuse { color: var(--purple); background: #a855f718; border-color: #a855f740; }
+    .btn-acute { color: var(--blue); background: #3b82f618; border-color: #3b82f640; }
+
+    .option-item { padding: 3px 0; }
+    .option-item label { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; cursor: pointer; user-select: none; }
+    .custom-cb { width: 16px; height: 16px; margin: 0; accent-color: var(--coral); cursor: pointer; }
+
+    .lesson-note {
+      margin: 0;
+      padding: 10px 12px;
+      color: #845f18;
+      background: #fff7dc;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    @media (max-width: 900px) {
+      main { flex-direction: column; overflow-y: auto; }
+      .panel { width: 100%; }
+      .canvas-wrapper { min-height: 360px; }
+    }
+
+    @media (max-width: 520px) {
+      header { padding-right: 14px; padding-left: 14px; }
+      .back-link { top: 16px; left: 14px; font-size: 11px; }
+      main { padding-right: 12px; padding-left: 12px; }
+      .preset-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .btn { font-size: 11px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="back-link" href="../index.html">← 工具首页</a>
+    <h1>趣味三角形学堂</h1>
+    <p>拖拽顶点，探索三角形内角和的奥秘</p>
+  </header>
+
+  <main>
+    <section class="canvas-section">
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="canvas" aria-label="可拖拽顶点的三角形画布"></canvas>
+      </div>
+      <div class="canvas-hint">拖拽 A、B、C 三个彩色圆点来改变三角形的形状</div>
+    </section>
+
+    <aside class="panel" aria-label="三角形数据与设置">
+      <section class="card">
+        <div class="card-title"><span class="icon" style="background:var(--coral)">∠</span>角度与边长</div>
+        <div class="data-row"><span class="data-label"><span class="data-dot" style="background:var(--coral)"></span>角 A</span><span class="data-value" id="vAngleA" style="color:var(--coral)">--</span></div>
+        <div class="data-row"><span class="data-label"><span class="data-dot" style="background:var(--mint)"></span>角 B</span><span class="data-value" id="vAngleB" style="color:var(--mint)">--</span></div>
+        <div class="data-row"><span class="data-label"><span class="data-dot" style="background:var(--orange)"></span>角 C</span><span class="data-value" id="vAngleC" style="color:var(--orange)">--</span></div>
+        <div class="sum-row"><span class="sum-label">内角和</span><span class="sum-value" id="vAngleSum">--</span></div>
+        <div class="divider"></div>
+        <div class="data-row"><span class="data-label">边 a（BC）</span><span class="data-value" id="vSideA" style="color:var(--muted)">--</span></div>
+        <div class="data-row"><span class="data-label">边 b（AC）</span><span class="data-value" id="vSideB" style="color:var(--muted)">--</span></div>
+        <div class="data-row"><span class="data-label">边 c（AB）</span><span class="data-value" id="vSideC" style="color:var(--muted)">--</span></div>
+      </section>
+
+      <section class="card">
+        <div class="card-title"><span class="icon" style="background:var(--mint)">△</span>三角形类型</div>
+        <div class="type-badges" id="typePanel"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-title"><span class="icon" style="background:var(--orange)">✦</span>预设形状</div>
+        <div class="preset-grid">
+          <button class="btn btn-equilateral" data-preset="equilateral">等边</button>
+          <button class="btn btn-isosceles" data-preset="isosceles">等腰</button>
+          <button class="btn btn-right" data-preset="right">直角</button>
+          <button class="btn btn-obtuse" data-preset="obtuse">钝角</button>
+          <button class="btn btn-acute" data-preset="acute">锐角</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title"><span class="icon" style="background:#6c5ce7">☰</span>显示选项</div>
+        <div class="option-item"><label><input class="custom-cb" type="checkbox" id="optAngles" checked> 显示角度值</label></div>
+        <div class="option-item"><label><input class="custom-cb" type="checkbox" id="optSides" checked> 显示边长值</label></div>
+        <div class="option-item"><label><input class="custom-cb" type="checkbox" id="optArcs" checked> 显示角度弧线</label></div>
+      </section>
+
+      <p class="lesson-note">不管三角形变成什么样，三个内角合起来总是 <strong>180°</strong>。拖动顶点验证一下吧！</p>
+    </aside>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const COLORS = { A: '#FF6B6B', B: '#2EC4B6', C: '#FF9F1C', fill: 'rgba(255, 159, 28, .08)', stroke: '#E85D75', grid: 'rgba(0, 0, 0, .035)', label: '#555' };
+      const ARC_RADIUS = 32;
+      const VERTEX_RADIUS = 9;
+      const HIT_RADIUS = 24;
+      const canvas = document.getElementById('canvas');
+      const wrapper = document.getElementById('canvasWrapper');
+      const ctx = canvas.getContext('2d');
+      const angleEls = ['vAngleA', 'vAngleB', 'vAngleC'].map((id) => document.getElementById(id));
+      const sideEls = ['vSideA', 'vSideB', 'vSideC'].map((id) => document.getElementById(id));
+      const sumEl = document.getElementById('vAngleSum');
+      const typePanel = document.getElementById('typePanel');
+      let canvasWidth = 0;
+      let canvasHeight = 0;
+      let dpr = 1;
+      let initialized = false;
+      let dragging = null;
+      let hovered = null;
+      let showAngles = true;
+      let showSides = true;
+      let showArcs = true;
+      let vertices = [];
+
+      // 根据当前画布大小生成预设顶点，保证预设在不同屏幕上都能完整显示。
+      function getPreset(type) {
+        const cx = canvasWidth / 2;
+        const cy = canvasHeight / 2;
+        const unit = Math.min(canvasWidth, canvasHeight) * .34;
+        const halfHeight = Math.sqrt(3) / 2;
+        const presets = {
+          default: [[cx, cy - unit * .95], [cx - unit * .9, cy + unit * .7], [cx + unit, cy + unit * .55]],
+          equilateral: [[cx, cy - unit], [cx - unit * halfHeight, cy + unit * .5], [cx + unit * halfHeight, cy + unit * .5]],
+          isosceles: [[cx, cy - unit * 1.05], [cx - unit * .72, cy + unit * .65], [cx + unit * .72, cy + unit * .65]],
+          right: [[cx - unit * .8, cy - unit * .7], [cx + unit * .8, cy + unit * .7], [cx - unit * .8, cy + unit * .7]],
+          obtuse: [[cx, cy - unit * .2], [cx - unit * .95, cy + unit * .4], [cx + unit * .9, cy + unit * .32]],
+          acute: [[cx - unit * .08, cy - unit], [cx - unit * .9, cy + unit * .65], [cx + unit, cy + unit * .5]]
+        };
+        return presets[type] || presets.default;
+      }
+
+      // 调整画布的高清像素尺寸，并在窗口变化后限制顶点不越界。
+      function resizeCanvas() {
+        const rect = wrapper.getBoundingClientRect();
+        const width = Math.floor(rect.width - 20);
+        const height = Math.floor(rect.height - 20);
+        if (width < 10 || height < 10) return;
+
+        const oldWidth = canvasWidth;
+        const oldHeight = canvasHeight;
+        canvasWidth = width;
+        canvasHeight = height;
+        dpr = window.devicePixelRatio || 1;
+        canvas.width = canvasWidth * dpr;
+        canvas.height = canvasHeight * dpr;
+        canvas.style.width = `${canvasWidth}px`;
+        canvas.style.height = `${canvasHeight}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        if (!initialized) {
+          vertices = getPreset('default').map((point, index) => ({ x: point[0], y: point[1], label: ['A', 'B', 'C'][index], color: [COLORS.A, COLORS.B, COLORS.C][index] }));
+          initialized = true;
+        } else {
+          const scaleX = oldWidth ? canvasWidth / oldWidth : 1;
+          const scaleY = oldHeight ? canvasHeight / oldHeight : 1;
+          vertices.forEach((vertex) => {
+            vertex.x = Math.max(25, Math.min(canvasWidth - 25, vertex.x * scaleX));
+            vertex.y = Math.max(25, Math.min(canvasHeight - 25, vertex.y * scaleY));
+          });
+        }
+        render();
+        updatePanel();
+      }
+
+      function distance(a, b) { return Math.hypot(b.x - a.x, b.y - a.y); }
+
+      function angleDegrees(vertex, first, second) {
+        const ax = first.x - vertex.x;
+        const ay = first.y - vertex.y;
+        const bx = second.x - vertex.x;
+        const by = second.y - vertex.y;
+        return Math.atan2(Math.abs(ax * by - ay * bx), ax * bx + ay * by) * 180 / Math.PI;
+      }
+
+      function triangleArea() {
+        const [a, b, c] = vertices;
+        return Math.abs((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)) / 2;
+      }
+
+      function drawGrid() {
+        ctx.strokeStyle = COLORS.grid;
+        ctx.lineWidth = 1;
+        for (let x = 40; x < canvasWidth; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvasHeight); ctx.stroke(); }
+        for (let y = 40; y < canvasHeight; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvasWidth, y); ctx.stroke(); }
+      }
+
+      function drawTriangle() {
+        ctx.beginPath();
+        ctx.moveTo(vertices[0].x, vertices[0].y);
+        vertices.slice(1).forEach((vertex) => ctx.lineTo(vertex.x, vertex.y));
+        ctx.closePath();
+        ctx.fillStyle = COLORS.fill;
+        ctx.fill();
+        ctx.strokeStyle = COLORS.stroke;
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+      }
+
+      // 绘制每个内角的弧线；接近直角时改用直角标记，便于观察角的变化。
+      function drawAngleMarks() {
+        [[0, 1, 2], [1, 2, 0], [2, 0, 1]].forEach(([vertexIndex, firstIndex, secondIndex]) => {
+          const vertex = vertices[vertexIndex];
+          const first = vertices[firstIndex];
+          const second = vertices[secondIndex];
+          const angle = angleDegrees(vertex, first, second);
+          const start = Math.atan2(first.y - vertex.y, first.x - vertex.x);
+          const end = Math.atan2(second.y - vertex.y, second.x - vertex.x);
+          const sweep = (end - start + Math.PI * 2) % (Math.PI * 2);
+          const counterClockwise = sweep > Math.PI;
+
+          if (Math.abs(angle - 90) < .2) {
+            const firstLength = Math.max(1, distance(vertex, first));
+            const secondLength = Math.max(1, distance(vertex, second));
+            const ux = (first.x - vertex.x) / firstLength;
+            const uy = (first.y - vertex.y) / firstLength;
+            const vx = (second.x - vertex.x) / secondLength;
+            const vy = (second.y - vertex.y) / secondLength;
+            const size = 19;
+            ctx.beginPath();
+            ctx.moveTo(vertex.x + ux * size, vertex.y + uy * size);
+            ctx.lineTo(vertex.x + (ux + vx) * size, vertex.y + (uy + vy) * size);
+            ctx.lineTo(vertex.x + vx * size, vertex.y + vy * size);
+            ctx.strokeStyle = vertex.color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            return;
+          }
+
+          ctx.beginPath();
+          ctx.arc(vertex.x, vertex.y, ARC_RADIUS, start, end, counterClockwise);
+          ctx.strokeStyle = vertex.color;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        });
+      }
+
+      function drawLabel(x, y, text, color, bold = false) {
+        ctx.font = `${bold ? 'bold ' : ''}13px -apple-system, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const width = ctx.measureText(text).width + 12;
+        ctx.fillStyle = 'rgba(255, 255, 255, .9)';
+        ctx.fillRect(x - width / 2, y - 10, width, 20);
+        ctx.fillStyle = color;
+        ctx.fillText(text, x, y);
+      }
+
+      function drawAngleLabels() {
+        [[0, 1, 2], [1, 2, 0], [2, 0, 1]].forEach(([vertexIndex, firstIndex, secondIndex]) => {
+          const vertex = vertices[vertexIndex];
+          const first = vertices[firstIndex];
+          const second = vertices[secondIndex];
+          const firstLength = Math.max(1, distance(vertex, first));
+          const secondLength = Math.max(1, distance(vertex, second));
+          const bisectorX = (first.x - vertex.x) / firstLength + (second.x - vertex.x) / secondLength;
+          const bisectorY = (first.y - vertex.y) / firstLength + (second.y - vertex.y) / secondLength;
+          const bisectorLength = Math.max(1, Math.hypot(bisectorX, bisectorY));
+          const angle = angleDegrees(vertex, first, second);
+          const offset = angle > 120 ? 66 : 54;
+          drawLabel(vertex.x + bisectorX / bisectorLength * offset, vertex.y + bisectorY / bisectorLength * offset, `${angle.toFixed(1)}°`, vertex.color, true);
+        });
+      }
+
+      function drawSideLabels() {
+        const sides = [[1, 2, 'a'], [0, 2, 'b'], [0, 1, 'c']];
+        const center = vertices.reduce((total, vertex) => ({ x: total.x + vertex.x / 3, y: total.y + vertex.y / 3 }), { x: 0, y: 0 });
+        sides.forEach(([firstIndex, secondIndex, label]) => {
+          const first = vertices[firstIndex];
+          const second = vertices[secondIndex];
+          const length = distance(first, second);
+          const midX = (first.x + second.x) / 2;
+          const midY = (first.y + second.y) / 2;
+          let normalX = -(second.y - first.y) / Math.max(1, length);
+          let normalY = (second.x - first.x) / Math.max(1, length);
+          if (normalX * (midX - center.x) + normalY * (midY - center.y) < 0) { normalX = -normalX; normalY = -normalY; }
+          drawLabel(midX + normalX * 18, midY + normalY * 18, `${label} = ${length.toFixed(1)}`, COLORS.label);
+        });
+      }
+
+      function drawVertices() {
+        vertices.forEach((vertex, index) => {
+          const active = hovered === index || dragging === index;
+          const radius = active ? 11 : VERTEX_RADIUS;
+          if (active) {
+            ctx.beginPath();
+            ctx.arc(vertex.x, vertex.y, radius + 10, 0, Math.PI * 2);
+            ctx.fillStyle = `${vertex.color}18`;
+            ctx.fill();
+          }
+          ctx.beginPath();
+          ctx.arc(vertex.x, vertex.y, radius, 0, Math.PI * 2);
+          ctx.fillStyle = vertex.color;
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          ctx.font = 'bold 18px -apple-system, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = vertex.color;
+          ctx.fillText(vertex.label, vertex.x + (vertex.x - canvasWidth / 2) * .07, vertex.y + (vertex.y - canvasHeight / 2) * .07 - 20);
+        });
+      }
+
+      function render() {
+        if (!canvasWidth || !vertices.length) return;
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        drawGrid();
+        drawTriangle();
+        const valid = triangleArea() > 50;
+        if (valid && showArcs) drawAngleMarks();
+        if (valid && showSides) drawSideLabels();
+        if (valid && showAngles) drawAngleLabels();
+        drawVertices();
+      }
+
+      function near(a, b, tolerance = .0001) { return Math.abs(a - b) / Math.max(a, b, 1) < tolerance; }
+
+      function updatePanel() {
+        if (vertices.length < 3 || triangleArea() <= 50) {
+          angleEls.forEach((element) => { element.textContent = '--'; });
+          sideEls.forEach((element) => { element.textContent = '--'; });
+          sumEl.textContent = '--';
+          typePanel.innerHTML = '<span class="type-badge" style="background:#636e7218;color:#636e72;border-color:#636e7240">请把三个点分开</span>';
+          return;
+        }
+
+        const angles = [angleDegrees(vertices[0], vertices[1], vertices[2]), angleDegrees(vertices[1], vertices[2], vertices[0]), angleDegrees(vertices[2], vertices[0], vertices[1])];
+        const sides = [distance(vertices[1], vertices[2]), distance(vertices[0], vertices[2]), distance(vertices[0], vertices[1])];
+        angleEls.forEach((element, index) => { element.textContent = `${angles[index].toFixed(2)}°`; });
+        sideEls.forEach((element, index) => { element.textContent = sides[index].toFixed(2); });
+        sumEl.textContent = `${(angles[0] + angles[1] + angles[2]).toFixed(2)}°`;
+
+        const isEquilateral = near(sides[0], sides[1]) && near(sides[1], sides[2]);
+        const isIsosceles = isEquilateral || near(sides[0], sides[1]) || near(sides[1], sides[2]) || near(sides[0], sides[2]);
+        const angleType = angles.some((angle) => Math.abs(angle - 90) < .2) ? '直角三角形' : angles.some((angle) => angle > 90) ? '钝角三角形' : '锐角三角形';
+        const types = [isEquilateral ? '等边三角形' : isIsosceles ? '等腰三角形' : '不等边三角形', angleType];
+        const styles = { '等边三角形': ['#ff6b6b18', '#ff6b6b', '#ff6b6b40'], '等腰三角形': ['#2ec4b618', '#2ec4b6', '#2ec4b640'], '不等边三角形': ['#636e7218', '#636e72', '#636e7240'], '直角三角形': ['#ff9f1c18', '#ff9f1c', '#ff9f1c40'], '钝角三角形': ['#a855f718', '#a855f7', '#a855f740'], '锐角三角形': ['#3b82f618', '#3b82f6', '#3b82f640'] };
+        typePanel.innerHTML = types.map((type) => `<span class="type-badge" style="background:${styles[type][0]};color:${styles[type][1]};border-color:${styles[type][2]}">${type}</span>`).join('');
+      }
+
+      function pointerPosition(event) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: (event.clientX - rect.left) * canvasWidth / rect.width, y: (event.clientY - rect.top) * canvasHeight / rect.height };
+      }
+
+      function findVertex(position) { return vertices.findIndex((vertex) => distance(vertex, position) < HIT_RADIUS); }
+
+      canvas.addEventListener('pointerdown', (event) => {
+        const index = findVertex(pointerPosition(event));
+        if (index < 0) return;
+        event.preventDefault();
+        dragging = index;
+        canvas.setPointerCapture(event.pointerId);
+        canvas.style.cursor = 'grabbing';
+        render();
+      });
+
+      canvas.addEventListener('pointermove', (event) => {
+        const position = pointerPosition(event);
+        if (dragging !== null) {
+          vertices[dragging].x = Math.max(25, Math.min(canvasWidth - 25, position.x));
+          vertices[dragging].y = Math.max(25, Math.min(canvasHeight - 25, position.y));
+          render();
+          updatePanel();
+          return;
+        }
+        const nextHovered = findVertex(position);
+        if (nextHovered !== hovered) {
+          hovered = nextHovered;
+          canvas.style.cursor = hovered === null ? 'default' : 'grab';
+          render();
+        }
+      });
+
+      function stopDragging(event) {
+        if (dragging === null) return;
+        dragging = null;
+        canvas.style.cursor = hovered === null ? 'default' : 'grab';
+        if (event.pointerId !== undefined && canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+        render();
+      }
+
+      canvas.addEventListener('pointerup', stopDragging);
+      canvas.addEventListener('pointercancel', stopDragging);
+      canvas.addEventListener('pointerleave', (event) => { if (dragging === null) { hovered = null; render(); } else stopDragging(event); });
+
+      document.querySelectorAll('[data-preset]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const preset = getPreset(button.dataset.preset);
+          vertices.forEach((vertex, index) => { vertex.x = preset[index][0]; vertex.y = preset[index][1]; });
+          render();
+          updatePanel();
+        });
+      });
+
+      [['optAngles', 'showAngles'], ['optSides', 'showSides'], ['optArcs', 'showArcs']].forEach(([id, state]) => {
+        document.getElementById(id).addEventListener('change', (event) => {
+          if (state === 'showAngles') showAngles = event.target.checked;
+          if (state === 'showSides') showSides = event.target.checked;
+          if (state === 'showArcs') showArcs = event.target.checked;
+          render();
+        });
+      });
+
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+    })();
+  </script>
+</body>
+</html>

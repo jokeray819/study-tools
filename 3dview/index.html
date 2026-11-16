@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>空间堆叠教具</title>
+  <style>
+    :root {
+      --ink: #1f2a44;
+      --muted: #7b87a2;
+      --line: #d9e1f2;
+      --paper: #f7f9ff;
+      --panel: rgba(255, 255, 255, 0.9);
+      --blue: #5d6df5;
+      --blue-dark: #4050d6;
+      --mint: #63d5c0;
+      --yellow: #ffd36c;
+      --cell: 68px;
+      --cube: 56px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      font-family: Inter, ui-rounded, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at 10% 15%, rgba(255, 211, 108, 0.22), transparent 27%),
+        radial-gradient(circle at 88% 86%, rgba(99, 213, 192, 0.2), transparent 28%),
+        var(--paper);
+    }
+
+    button { font: inherit; }
+
+    .app {
+      width: min(1180px, calc(100% - 40px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 42px 0 54px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      letter-spacing: -0.05em;
+      line-height: 1.05;
+    }
+
+    .subtitle {
+      max-width: 430px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .clear-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 15px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.72);
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+
+    .clear-button:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-1px); }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.84fr) minmax(460px, 1.16fr);
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 1px solid rgba(217, 225, 242, 0.92);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: 0 20px 60px rgba(45, 62, 113, 0.1);
+      backdrop-filter: blur(12px);
+    }
+
+    .grid-panel {
+      min-height: 590px;
+      padding: 28px;
+    }
+
+    .panel-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .panel-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-heading p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .counter {
+      min-width: 62px;
+      border-radius: 14px;
+      padding: 9px 10px;
+      text-align: center;
+      background: #eef0ff;
+    }
+
+    .counter strong { display: block; color: var(--blue-dark); font-size: 22px; line-height: 1; }
+    .counter span { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+
+    .grid-wrap { display: flex; justify-content: center; padding: 12px 0 24px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(44px, 1fr));
+      width: min(100%, 370px);
+      aspect-ratio: 1;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid #e5e9f6;
+      border-radius: 20px;
+      background: #f1f4fc;
+    }
+
+    .cell {
+      position: relative;
+      border: 1px solid #d6def1;
+      border-radius: 12px;
+      color: #99a3ba;
+      background: #fff;
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+
+    .cell::before {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      content: "";
+      background: linear-gradient(135deg, rgba(255,255,255,0.9), transparent);
+      pointer-events: none;
+    }
+
+    .cell:hover { border-color: var(--blue); background: #f7f8ff; transform: scale(1.04); z-index: 1; }
+    .cell:focus-visible { outline: 3px solid rgba(93, 109, 245, 0.28); outline-offset: 2px; }
+    .cell.has-cubes { border-color: #aeb9ff; background: #eef0ff; }
+
+    .cell-label { position: relative; font-size: 12px; font-weight: 700; }
+
+    .cell-count {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 21px;
+      height: 21px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--blue);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .cell.has-cubes .cell-count { display: flex; }
+
+    .grid-caption {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .legend { display: inline-flex; align-items: center; gap: 7px; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); }
+
+    .scene-panel { min-height: 590px; padding: 28px 28px 22px; overflow: hidden; }
+
+    .scene-status { 
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 4px rgba(99, 213, 192, 0.16); }
+
+    .view-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: -8px 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .view-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .view-button {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 7px 10px;
+      color: var(--muted);
+      background: #fff;
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+
+    .view-button:hover { border-color: var(--blue); color: var(--blue); }
+    .view-button.active { border-color: var(--blue); color: #fff; background: var(--blue); }
+    .view-button:focus-visible { outline: 3px solid rgba(93, 109, 245, 0.24); outline-offset: 2px; }
+
+    .scene {
+      position: relative;
+      height: 410px;
+      margin: 4px -28px 0;
+      overflow: hidden;
+      cursor: grab;
+      touch-action: none;
+      background:
+        linear-gradient(rgba(225, 231, 245, 0.34) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(225, 231, 245, 0.34) 1px, transparent 1px),
+        linear-gradient(150deg, rgba(248, 250, 255, 0.9), rgba(236, 241, 252, 0.55));
+      background-size: 34px 34px, 34px 34px, auto;
+      border-top: 1px solid #edf0f8;
+      border-bottom: 1px solid #edf0f8;
+    }
+
+    .scene.dragging { cursor: grabbing; }
+
+    .scene-canvas {
+      position: relative;
+      z-index: 1;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .scene::after {
+      position: absolute;
+      left: 50%;
+      bottom: 35px;
+      width: 430px;
+      height: 70px;
+      border-radius: 50%;
+      content: "";
+      background: rgba(60, 74, 132, 0.12);
+      filter: blur(20px);
+      transform: translateX(-50%);
+    }
+
+    .scene-label {
+      position: absolute;
+      right: 24px;
+      bottom: 20px;
+      z-index: 2;
+      color: rgba(55, 68, 114, 0.55);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+
+    .selection {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 19px;
+    }
+
+    .selection-copy { color: var(--muted); font-size: 13px; }
+    .selection-copy strong { display: block; margin-bottom: 4px; color: var(--ink); font-size: 15px; }
+
+    .height-pill {
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--blue-dark);
+      background: #eef0ff;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 860px) {
+      .app { width: min(640px, calc(100% - 28px)); padding-top: 26px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .workspace { grid-template-columns: 1fr; }
+      .grid-panel, .scene-panel { min-height: auto; }
+    }
+
+    @media (max-width: 520px) {
+      :root { --cell: 56px; --cube: 46px; }
+      .grid-panel, .scene-panel { padding: 22px 18px; }
+      .scene { height: 350px; margin-right: -18px; margin-left: -18px; }
+      .scene::after { width: 340px; }
+      .selection { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Spatial learning tool</p>
+        <h1>空间堆叠教具</h1>
+        <p class="subtitle">在左侧平面网格中放置方块，观察它们如何在右侧空间中逐层堆叠。</p>
+      </div>
+      <button class="clear-button" id="clearButton" type="button" aria-label="清空所有正方体">↺&nbsp; 清空场景</button>
+    </header>
+
+    <section class="workspace" aria-label="空间堆叠操作区">
+      <section class="panel grid-panel" aria-labelledby="gridTitle">
+        <div class="panel-heading">
+          <div>
+            <h2 id="gridTitle">平面网格</h2>
+            <p>点击格子，在对应位置添加一个正方体</p>
+          </div>
+          <div class="counter"><strong id="totalCount">0</strong><span>总方块</span></div>
+        </div>
+
+        <div class="grid-wrap">
+          <div class="grid" id="grid" role="grid" aria-label="5乘5平面网格"></div>
+        </div>
+
+        <div class="grid-caption">
+          <span class="legend"><i class="legend-dot"></i> 已放置位置</span>
+          <span>5 × 5 = 25 格</span>
+        </div>
+      </section>
+
+      <section class="panel scene-panel" aria-labelledby="sceneTitle">
+        <div class="panel-heading">
+          <div>
+            <h2 id="sceneTitle">3D 视图</h2>
+            <p>拖动旋转视角，点击正方体可移除最上面一块</p>
+          </div>
+          <div class="scene-status"><i class="status-dot"></i>实时同步</div>
+        </div>
+
+        <div class="view-toolbar">
+          <span>快捷视图 · 列 = X，行 = Y，高度 = Z</span>
+          <div class="view-buttons" role="group" aria-label="切换三维视图">
+            <button class="view-button" type="button" data-view="left" title="从左侧观察第1列：A1、B1、C1、D1、E1">左视图</button>
+            <button class="view-button" type="button" data-view="right" title="从右侧观察第5列：A5、B5、C5、D5、E5">右视图</button>
+            <button class="view-button" type="button" data-view="front" title="从前方观察E行：E1、E2、E3、E4、E5">正视图</button>
+            <button class="view-button" type="button" data-view="top" title="沿高度方向查看 A1 到 E5 网格">俯视图</button>
+          </div>
+        </div>
+
+        <div class="scene" id="scene" aria-label="可拖动的正方体3D堆叠视图">
+          <canvas class="scene-canvas" id="sceneCanvas" aria-label="带 A1 到 E5 坐标标识的正方体3D视图"></canvas>
+          <span class="scene-label">ORBIT 360° · 5 × 5</span>
+        </div>
+
+        <div class="selection">
+          <div class="selection-copy">
+            <strong id="selectionTitle">还没有选择位置</strong>
+            <span id="selectionHint">从左侧任意格子开始搭建</span>
+          </div>
+          <span class="height-pill" id="heightPill">高度 0 层</span>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const grid = document.querySelector('#grid');
+    const scene = document.querySelector('#scene');
+    const canvas = document.querySelector('#sceneCanvas');
+    const context = canvas.getContext('2d');
+    const totalCount = document.querySelector('#totalCount');
+    const clearButton = document.querySelector('#clearButton');
+    const selectionTitle = document.querySelector('#selectionTitle');
+    const selectionHint = document.querySelector('#selectionHint');
+    const heightPill = document.querySelector('#heightPill');
+    const viewButtons = document.querySelectorAll('[data-view]');
+    const stacks = Array.from({ length: 5 }, () => Array(5).fill(0));
+    let selected = null;
+    let yaw = -0.72;
+    let pitch = 0.72;
+    let zoom = 1;
+    let drag = null;
+    let activeView = null;
+    let renderedCubeFaces = [];
+
+    const layerColors = [
+      { top: '#8d9aff', light: '#5869e8', medium: '#6676ed', dark: '#3f4fc5', bottom: '#26358d' },
+      { top: '#7ee3cf', light: '#3dc7ae', medium: '#52d3bb', dark: '#24947f', bottom: '#17685c' },
+      { top: '#ffdc82', light: '#f5bd4e', medium: '#ffcb63', dark: '#d88e24', bottom: '#9f6514' },
+      { top: '#ffa2b1', light: '#ef6980', medium: '#f98196', dark: '#c8445b', bottom: '#912f42' },
+      { top: '#c2a2ff', light: '#956ee8', medium: '#aa84f2', dark: '#6d49bd', bottom: '#4c3288' }
+    ];
+
+    // 视图基于左侧网格：列是 X 轴，行是 Y 轴，堆叠高度是 Z 轴。
+    // 正视图从 E 行朝 A 行观察；左视图从第 1 列朝第 5 列观察；右视图相反。
+    const viewAngles = {
+      left: { yaw: -Math.PI / 2, pitch: 0 },
+      right: { yaw: Math.PI / 2, pitch: 0 },
+      front: { yaw: 0, pitch: 0 },
+      top: { yaw: 0, pitch: Math.PI / 2 }
+    };
+
+    // 将旋转角保持在一整圈范围内，跨过 0° 时继续平滑旋转。
+    function normalizeAngle(angle) {
+      const fullTurn = Math.PI * 2;
+      return ((angle % fullTurn) + fullTurn) % fullTurn;
+    }
+
+    // 切换预设相机角度，并同步按钮的选中状态。
+    function setView(viewName) {
+      const view = viewAngles[viewName];
+      if (!view) return;
+      yaw = normalizeAngle(view.yaw);
+      pitch = normalizeAngle(view.pitch);
+      activeView = viewName;
+      viewButtons.forEach((button) => button.classList.toggle('active', button.dataset.view === activeView));
+      drawScene();
+    }
+
+    // 根据水平角和垂直角计算相机的三个正交方向。
+    function getCameraBasis() {
+      const horizontal = Math.cos(pitch);
+      const view = {
+        x: horizontal * Math.sin(yaw),
+        y: horizontal * Math.cos(yaw),
+        z: Math.sin(pitch)
+      };
+      return {
+        view,
+        right: { x: Math.cos(yaw), y: -Math.sin(yaw), z: 0 },
+        up: {
+          x: -Math.sin(yaw) * Math.sin(pitch),
+          y: -Math.cos(yaw) * Math.sin(pitch),
+          z: Math.cos(pitch)
+        }
+      };
+    }
+
+    // 将三维坐标投影到画布，支持从上方、侧面和下方观察。
+    function project(x, y, z, unit, origin) {
+      const camera = getCameraBasis();
+      return {
+        x: origin.x + (x * camera.right.x + y * camera.right.y + z * camera.right.z) * unit,
+        y: origin.y - (x * camera.up.x + y * camera.up.y + z * camera.up.z) * unit,
+        depth: x * camera.view.x + y * camera.view.y + z * camera.view.z
+      };
+    }
+
+    // 绘制一个多边形，并统一处理填充和描边。
+    function polygon(points, fill, stroke = 'rgba(53, 68, 130, 0.24)') {
+      context.beginPath();
+      points.forEach((point, index) => {
+        if (index === 0) context.moveTo(point.x, point.y);
+        else context.lineTo(point.x, point.y);
+      });
+      context.closePath();
+      context.fillStyle = fill;
+      context.fill();
+      context.strokeStyle = stroke;
+      context.lineWidth = 1;
+      context.stroke();
+    }
+
+    // 判断画布坐标是否落在一个正方体面内。
+    function isPointInPolygon(point, points) {
+      let inside = false;
+      for (let index = 0, previous = points.length - 1; index < points.length; previous = index, index += 1) {
+        const currentPoint = points[index];
+        const previousPoint = points[previous];
+        const crossesEdge = (currentPoint.y > point.y) !== (previousPoint.y > point.y)
+          && point.x < (previousPoint.x - currentPoint.x) * (point.y - currentPoint.y) / (previousPoint.y - currentPoint.y) + currentPoint.x;
+        if (crossesEdge) inside = !inside;
+      }
+      return inside;
+    }
+
+    // 删除点击位置所属堆叠的最上层方块，保证剩余方块不会悬空。
+    function removeCubeAt(clientX, clientY) {
+      const bounds = canvas.getBoundingClientRect();
+      const point = { x: clientX - bounds.left, y: clientY - bounds.top };
+      const clickedFace = [...renderedCubeFaces].reverse().find((face) => isPointInPolygon(point, face.points));
+      if (!clickedFace || stacks[clickedFace.row][clickedFace.col] === 0) return;
+      stacks[clickedFace.row][clickedFace.col] -= 1;
+      selected = { row: clickedFace.row, col: clickedFace.col };
+      render();
+    }
+
+    // 生成立方体朝向相机的面，包含底面以支持完整的垂直环绕观察。
+    function createCubeFaces(col, row, level, unit, origin) {
+      const x0 = col - 2.5;
+      const x1 = col - 1.5;
+      const y0 = row - 2.5;
+      const y1 = row - 1.5;
+      const z0 = level;
+      const z1 = level + 1;
+      const p = (x, y, z) => project(x, y, z, unit, origin);
+      const colors = layerColors[level % layerColors.length];
+      const faces = [
+        { points: [p(x0, y0, z1), p(x1, y0, z1), p(x1, y1, z1), p(x0, y1, z1)], normal: { x: 0, y: 0, z: 1 }, fill: colors.top },
+        { points: [p(x0, y1, z0), p(x1, y1, z0), p(x1, y0, z0), p(x0, y0, z0)], normal: { x: 0, y: 0, z: -1 }, fill: colors.bottom },
+        { points: [p(x1, y0, z0), p(x1, y1, z0), p(x1, y1, z1), p(x1, y0, z1)], normal: { x: 1, y: 0, z: 0 }, fill: colors.light },
+        { points: [p(x0, y1, z0), p(x0, y0, z0), p(x0, y0, z1), p(x0, y1, z1)], normal: { x: -1, y: 0, z: 0 }, fill: colors.medium },
+        { points: [p(x0, y1, z0), p(x1, y1, z0), p(x1, y1, z1), p(x0, y1, z1)], normal: { x: 0, y: 1, z: 0 }, fill: colors.dark },
+        { points: [p(x1, y0, z0), p(x0, y0, z0), p(x0, y0, z1), p(x1, y0, z1)], normal: { x: 0, y: -1, z: 0 }, fill: colors.medium }
+      ];
+      const camera = getCameraBasis();
+      return faces
+        .filter((face) => face.normal.x * camera.view.x + face.normal.y * camera.view.y + face.normal.z * camera.view.z > 0)
+        .map((face) => ({
+          points: face.points,
+          fill: face.fill,
+          depth: face.points.reduce((sum, point) => sum + point.depth, 0) / face.points.length,
+          level,
+          row,
+          col
+        }));
+    }
+
+    // 重绘地面网格、选中位置和所有方块。
+    function drawScene() {
+      const bounds = canvas.getBoundingClientRect();
+      const maxHeight = Math.max(0, ...stacks.flat());
+      const normalizedPoints = [];
+      for (const x of [-2.5, 2.5]) {
+        for (const y of [-2.5, 2.5]) {
+          for (const z of [0, maxHeight + 1]) normalizedPoints.push(project(x, y, z, 1, { x: 0, y: 0 }));
+        }
+      }
+      // 以平面网格中心（世界坐标 0, 0, 0）作为旋转目标，计算中心两侧的最大投影范围。
+      const maxAbsX = Math.max(...normalizedPoints.map((point) => Math.abs(point.x)));
+      const maxAbsY = Math.max(...normalizedPoints.map((point) => Math.abs(point.y)));
+      const padding = 42;
+      const unit = Math.min(
+        (bounds.width - padding * 2) / (maxAbsX * 2),
+        (bounds.height - padding * 2) / (maxAbsY * 2)
+      ) * zoom;
+      const origin = {
+        x: bounds.width / 2,
+        y: bounds.height / 2
+      };
+      context.clearRect(0, 0, bounds.width, bounds.height);
+
+      for (let row = 0; row < 5; row += 1) {
+        for (let col = 0; col < 5; col += 1) {
+          const x0 = col - 2.5;
+          const x1 = col - 1.5;
+          const y0 = row - 2.5;
+          const y1 = row - 1.5;
+          const tile = [project(x0, y0, 0, unit, origin), project(x1, y0, 0, unit, origin), project(x1, y1, 0, unit, origin), project(x0, y1, 0, unit, origin)];
+          const isSelected = selected && selected.row === row && selected.col === col;
+          polygon(tile, isSelected ? 'rgba(93, 109, 245, 0.23)' : 'rgba(225, 231, 247, 0.68)', isSelected ? '#5d6df5' : 'rgba(117, 132, 192, 0.28)');
+          const labelPoint = project(col - 2, row - 2, 0.02, unit, origin);
+          context.save();
+          context.fillStyle = isSelected ? '#4050d6' : 'rgba(82, 99, 155, 0.72)';
+          context.font = `700 ${Math.max(8, Math.min(14, unit * 0.18))}px Inter, "PingFang SC", sans-serif`;
+          context.textAlign = 'center';
+          context.textBaseline = 'middle';
+          context.fillText(`${String.fromCharCode(65 + row)}${col + 1}`, labelPoint.x, labelPoint.y);
+          context.restore();
+        }
+      }
+
+      const faces = [];
+      stacks.forEach((row, rowIndex) => row.forEach((height, colIndex) => {
+        for (let level = 0; level < height; level += 1) {
+          faces.push(...createCubeFaces(colIndex, rowIndex, level, unit, origin));
+        }
+      }));
+      faces.sort((a, b) => a.depth - b.depth || a.level - b.level);
+      renderedCubeFaces = faces;
+      faces.forEach((face) => polygon(face.points, face.fill));
+    }
+
+    // 让画布适配高分辨率屏幕，同时保持 CSS 尺寸不变。
+    function resizeCanvas() {
+      const bounds = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(bounds.width * ratio);
+      canvas.height = Math.round(bounds.height * ratio);
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      drawScene();
+    }
+
+    // 创建一个网格按钮，按钮本身就是可访问的操作入口。
+    function createCell(row, col) {
+      const cell = document.createElement('button');
+      cell.className = 'cell';
+      cell.type = 'button';
+      cell.dataset.row = row;
+      cell.dataset.col = col;
+      cell.setAttribute('role', 'gridcell');
+      cell.innerHTML = `<span class="cell-label">${String.fromCharCode(65 + row)}${col + 1}</span><span class="cell-count">0</span>`;
+      cell.addEventListener('click', () => addCube(row, col));
+      return cell;
+    }
+
+    // 根据当前堆叠数据刷新左侧状态、3D画布和底部提示。
+    function render() {
+      let total = 0;
+
+      stacks.forEach((row, rowIndex) => row.forEach((height, colIndex) => {
+        total += height;
+        const cell = grid.querySelector(`[data-row="${rowIndex}"][data-col="${colIndex}"]`);
+        cell.classList.toggle('has-cubes', height > 0);
+        cell.querySelector('.cell-count').textContent = height;
+        cell.setAttribute('aria-label', `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}，${height}个正方体`);
+
+      }));
+
+      totalCount.textContent = total;
+      updateSelection();
+      drawScene();
+    }
+
+    // 在指定坐标上增加一层，并将该坐标设为当前选中位置。
+    function addCube(row, col) {
+      stacks[row][col] += 1;
+      selected = { row, col };
+      render();
+    }
+
+    // 更新当前坐标和堆叠高度提示。
+    function updateSelection() {
+      if (!selected) return;
+      const { row, col } = selected;
+      const height = stacks[row][col];
+      selectionTitle.textContent = `位置 ${String.fromCharCode(65 + row)}${col + 1}`;
+      selectionHint.textContent = height ? '继续点击同一格，可向上堆叠' : '该位置已清空';
+      heightPill.textContent = `高度 ${height} 层`;
+    }
+
+    // 清除所有堆叠，让教具回到初始状态。
+    clearButton.addEventListener('click', () => {
+      stacks.forEach((row) => row.fill(0));
+      selected = null;
+      selectionTitle.textContent = '还没有选择位置';
+      selectionHint.textContent = '从左侧任意格子开始搭建';
+      heightPill.textContent = '高度 0 层';
+      render();
+    });
+
+    // 拖动画布旋转观察角度，拖动不会改变网格数据。
+    scene.addEventListener('pointerdown', (event) => {
+      drag = { x: event.clientX, y: event.clientY, yaw, pitch, width: scene.clientWidth, height: scene.clientHeight, axis: null, pointerId: event.pointerId };
+      activeView = null;
+      viewButtons.forEach((button) => button.classList.remove('active'));
+      scene.classList.add('dragging');
+      scene.setPointerCapture(event.pointerId);
+    });
+
+    scene.addEventListener('pointermove', (event) => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      const deltaX = event.clientX - drag.x;
+      const deltaY = event.clientY - drag.y;
+      if (!drag.axis && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 6) drag.axis = Math.abs(deltaX) >= Math.abs(deltaY) ? 'x' : 'y';
+      if (drag.axis === 'x') yaw = normalizeAngle(drag.yaw + deltaX / drag.width * Math.PI * 2);
+      if (drag.axis === 'y') pitch = normalizeAngle(drag.pitch - deltaY / drag.height * Math.PI * 2);
+      drawScene();
+    });
+
+    scene.addEventListener('pointerup', (event) => {
+      if (drag && event.pointerId === drag.pointerId) {
+        const isClick = !drag.axis
+          && Math.max(Math.abs(event.clientX - drag.x), Math.abs(event.clientY - drag.y)) <= 6;
+        if (isClick) removeCubeAt(event.clientX, event.clientY);
+        drag = null;
+        scene.classList.remove('dragging');
+      }
+    });
+
+    scene.addEventListener('pointercancel', () => {
+      drag = null;
+      scene.classList.remove('dragging');
+    });
+
+    scene.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      const nextZoom = zoom * Math.exp(-event.deltaY * 0.0015);
+      if (Number.isFinite(nextZoom) && nextZoom > 0) zoom = nextZoom;
+      drawScene();
+    }, { passive: false });
+
+    viewButtons.forEach((button) => button.addEventListener('click', () => setView(button.dataset.view)));
+
+    window.addEventListener('resize', resizeCanvas);
+
+    for (let row = 0; row < 5; row += 1) {
+      for (let col = 0; col < 5; col += 1) grid.appendChild(createCell(row, col));
+    }
+    resizeCanvas();
+    render();
+  </script>
+</body>
+</html>
